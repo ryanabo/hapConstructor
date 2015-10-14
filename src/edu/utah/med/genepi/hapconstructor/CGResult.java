@@ -1,0 +1,234 @@
+package edu.utah.med.genepi.hapconstructor;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import edu.utah.med.genepi.analysis.Analysis;
+import edu.utah.med.genepi.analysis.ModelCombo;
+import edu.utah.med.genepi.genie.GenieDataSet;
+import edu.utah.med.genepi.gm.Locus;
+import edu.utah.med.genepi.hapconstructor.analysis.ComboAddress;
+import edu.utah.med.genepi.hapconstructor.analysis.ComboSet;
+import edu.utah.med.genepi.hapconstructor.analysis.DynamicAnalysis;
+import edu.utah.med.genepi.hapconstructor.analysis.GeneUnit;
+import edu.utah.med.genepi.hapconstructor.analysis.MarkerCombo;
+import edu.utah.med.genepi.hapconstructor.analysis.MarkerUnit;
+import edu.utah.med.genepi.hapconstructor.analysis.ValueCombo;
+import edu.utah.med.genepi.hapconstructor.analysis.ValueUnit;
+import edu.utah.med.genepi.util.Ut;
+
+public class CGResult extends hapCResultImp {
+	
+	public CGResult( Analysis analysis, boolean logTableCounts )
+	{
+		super(analysis,logTableCounts);
+	}
+	
+	//---------------------------------------------------------------------------	
+	public void newMarkerSet( int newIndex, GenieDataSet gd, hapCParamManager params, HaplotypeResultStorage significantHaplotypes )
+	{
+ 		//System.out.println("CGResult - newMarkerSet");
+		DynamicAnalysis[] analyses = params.getAnalyses();
+		Locus l = gd.getLocus(-1,newIndex);
+		int geneId = l.getGeneId();
+		
+		boolean foundGene = false;
+		List<ComboAddress> addresses = new ArrayList<ComboAddress>();
+		GeneUnit[] geneunits = comboset.getGeneUnits();
+		for ( int i=0; i < geneunits.length; i++ )
+		{
+			// Extend haplotype within a gene
+			if ( geneunits[i].getId(gd) == geneId )
+			{
+				foundGene = true;
+				MarkerUnit[] markerunits = geneunits[i].getMarkerUnits();
+				for ( int j=0; j < markerunits.length; j++ )
+				{
+					// Check if composite models should be extended to haplotypes.
+					if ( params.useCompositeHaplotypes() ) 
+					{
+						addresses.add(new ComboAddress(new int[]{newIndex,i,j},new boolean[]{false,false},"composite","extendhaplotype"));
+					}
+				}
+				addresses.add(new ComboAddress(new int[]{newIndex,i,1},new boolean[]{false,true},"compositewithin","addmarker"));
+				break;
+			}
+		}
+		
+		if ( !foundGene )
+		{
+			addresses.add(new ComboAddress(new int[]{newIndex,1,0},new boolean[]{true,true},"compositebetween","addmarker"));
+		}
+		
+		long alleleValues = comboset.getPositionBasedHaplotype();
+		
+		for ( int i=0; i < addresses.size(); i++ )
+		{
+			ComboAddress ca = addresses.get(i);
+			
+			int[] alleles = new int[]{1,0};
+			if ( ca.getAction().contains("composite") ) alleles = new int[]{1};
+			
+			for ( int j=0; j < alleles.length; j++ )
+			{
+				MarkerCombo mcCopy = comboset.copyMarkerCombo();
+				ModelCombo modelComboCopy = comboset.copyModelCombo();
+				mcCopy.add(ca);
+				modelComboCopy.add(ca);
+				long newAlleleValues = alleleValues | (alleles[j] << ca.getIndex());
+				ComboSet cset = new ComboSet(mcCopy,newAlleleValues,modelComboCopy,ca.getType(),ca.getAction());
+				Integer[] analysisIndices = params.getAnalysisIndex(cset.getType(),cset.getAction());
+				for ( int k=0; k < analysisIndices.length; k++) analyses[analysisIndices[k]].bufferAdd(cset);
+			}
+		}
+ 		//System.out.println("CGResult - newMarkerSet END");
+	}
+	
+	//---------------------------------------------------------------------------
+	public String getOutput()
+	{
+		StringBuffer markerstr = new StringBuffer();
+		MarkerCombo mc = comboset.getMarkerCombo();
+		ModelCombo modelcombo = comboset.getModelCombo();
+		GeneUnit[] gu = mc.getGeneUnits();
+		for ( int i=0; i < gu.length; i++ )
+		{
+			MarkerUnit[] mu = gu[i].getMarkerUnits();
+			StringBuffer gustr = new StringBuffer();
+			for ( int j=0; j < mu.length; j++ )
+			{
+				int[] indices = mu[j].getLoci();
+				StringBuffer markerunitstr = new StringBuffer();
+				for ( int k=0; k < indices.length; k++ )
+				{
+					int index = indices[k] + 1;
+					//System.out.println("Appending indice " + index);
+					//System.out.println("index " + k + " indices length " + indices.length);
+					markerunitstr.append(indices[k]+1);
+					if ( k != (indices.length-1) ) markerunitstr.append("-");
+				}
+				gustr.append("[");
+				gustr.append(markerunitstr);
+				gustr.append("]");
+			}
+			markerstr.append(gustr);
+		}
+
+		ValueCombo vc = comboset.getValueCombo();
+		ValueUnit[] vu = vc.getValueUnits();
+		StringBuffer valuestr = new StringBuffer();
+		for ( int i=0; i < vu.length; i++ )
+		{
+			byte[][] values = vu[i].getValues();
+			StringBuffer unitstr = new StringBuffer();
+			for ( int j=0; j < values.length; j++ )
+			{
+				unitstr.append(values[j][0]);
+				if ( j != (values.length-1) ) unitstr.append("-");
+			}
+			valuestr.append("[");
+			valuestr.append(unitstr);
+			valuestr.append("]");
+		}		
+
+		StringBuffer modelstr = new StringBuffer();
+		String[] models = modelcombo.getModels();
+		for ( int i=0; i < models.length; i++ )
+		{
+			if ( models[i] != null )
+			{
+				modelstr.append(models[i]);
+				modelstr.append(" ");
+			}
+		}
+
+		String[] resultstr = new String[]{"-","-"};
+		if ( !statFailed ) resultstr = new String[]{result[0].toString(),result[1].toString()}; 
+
+		String[] resultValues = new String[]{markerstr.toString(),valuestr.toString(),statName,resultstr[0],resultstr[1]};
+		if ( statName.contains("Odds") )
+		{
+			resultValues = new String[]{markerstr.toString(),valuestr.toString(),modelstr.toString(),"CG",statName,resultstr[0],resultstr[1]};
+		}
+
+		return Ut.array2str(resultValues,":");
+//		int[] loci = comboset.getLoci();
+//		Long left2rightHap = comboset.getHaplotype(true); 
+//		int[] nonzeroIndex = new int[loci.length];
+//		for ( int i=0; i < loci.length; i++ ) nonzeroIndex[i] = loci[i]+1;
+//		String markerStr = Ut.array2str(nonzeroIndex,"-");
+//		
+//		String[] resultValues = new String[]{markerStr,model+""+(left2rightHap+1),statName,result[0].toString(),result[1].toString()};
+//		return Ut.array2str(resultValues,":");
+	}
+	
+	//---------------------------------------------------------------------------	
+	public void reducedMarkerSet( int removalIndex, GenieDataSet gd, hapCParamManager params )
+	{
+		DynamicAnalysis[] analyses = params.getAnalyses();
+		ComboAddress ca  = null;
+		// Need to check the location of the removalIndex
+		Locus l = gd.getLocus(-1, removalIndex);
+		int geneId = l.getGeneId();
+		
+		GeneUnit[] geneunits = comboset.getGeneUnits();
+		int nMarkerUnits = comboset.getMarkerUnits().length;
+		int markerUnitIter = 0;
+		int removeUnitIndex = -1;
+		String csetType = "compositewithin";
+		if ( geneunits.length > 1 ) csetType = "compositebetween";
+		for ( int i=0; i < geneunits.length; i++ )
+		{
+			if ( geneunits[i].getId(gd) == geneId )
+			{
+				MarkerUnit[] markerunits = geneunits[i].getMarkerUnits();
+				for ( int j=0; j < markerunits.length; j++ )
+				{
+					markerUnitIter++;
+					int[] loci = markerunits[j].getLoci();
+					for ( int k=0; k < loci.length; k++ )
+					{
+						if ( loci[k] == removalIndex )
+						{
+							if ( loci.length == 1 )
+							{
+								if ( nMarkerUnits == 2 )
+								{
+									// Transforms to a single marker unit within one gene
+									ca = new ComboAddress(new int[]{removalIndex,i,j},new boolean[]{false,false},"haplotype","removecompositeunit");
+									removeUnitIndex = markerUnitIter;
+								}
+								else if ( markerunits.length == 1 )
+								{
+									// Remove only marker unit in a gene
+									ca = new ComboAddress(new int[]{removalIndex,i,j},new boolean[]{false,false},"compositewithin","removecompositeunit");
+									removeUnitIndex = markerUnitIter;
+								}
+								else if ( markerunits.length > 1 )
+								{
+									// Remove only marker unit in a gene
+									ca = new ComboAddress(new int[]{removalIndex,i,j},new boolean[]{false,false},"compositebetween","removecompositeunit");
+									removeUnitIndex = markerUnitIter;
+								}
+							}
+							else
+							{
+								ca = new ComboAddress(new int[]{removalIndex,i,j},new boolean[]{false,false},csetType,"reducehaplotype");
+							}
+							break;
+						}
+					}
+				}
+			}
+		}
+		long alleleValues = comboset.getPositionBasedHaplotype();
+		MarkerCombo mcCopy = comboset.copyMarkerCombo();
+		ModelCombo modelCopy = comboset.copyModelCombo();
+		mcCopy.remove(ca);
+		modelCopy.remove(removeUnitIndex);
+		long newAlleleValues = alleleValues ^ (1 << ca.getIndex());
+		ComboSet cset = new ComboSet(mcCopy,newAlleleValues,modelCopy,ca.getType(),ca.getAction());
+		Integer[] analysisIndices = params.getAnalysisIndex(cset.getType(),cset.getAction());
+		for ( int k=0; k < analysisIndices.length; k++) analyses[analysisIndices[k]].bufferAdd(cset);
+	}
+}

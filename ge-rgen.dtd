@@ -1,0 +1,55 @@
+<!ELEMENT ge:rgen (ge:locus*, ge:datafile+, ge:param*, ge:cctable*)>
+<!ELEMENT ge:datafile (#PCDATA)>
+<!ELEMENT ge:locus (#PCDATA)>
+<!ELEMENT ge:covar (#PCDATA)>
+<!ELEMENT ge:tabletype (#PCDATA)>
+<!ELEMENT ge:param (#PCDATA)>
+<!ELEMENT ge:cctable (ge:col, ge:col+)>
+<!ELEMENT ge:col (ge:g+)>
+<!ELEMENT ge:g (ge:a+)>
+<!ELEMENT ge:a (#PCDATA)>
+
+<!ATTLIST ge:rgen
+  xmlns:ge CDATA #FIXED "http://genepi.med.utah.edu/xmlns/"
+  rseed NMTOKEN #REQUIRED
+  nsims CDATA #REQUIRED
+  top NMTOKEN "HapMCTopTogether"
+  drop NMTOKEN "HapMCDropTogether"
+  report CDATA "report" 
+  alleleformat NMTOKEN "numeric"
+  missingdata CDATA "0"
+  distribution CDATA "simulation"
+  decoder CDATA "no"
+  printfreq CDATA "no"
+  percent CDATA "0.0"
+>
+<!ATTLIST ge:locus
+  id NMTOKEN #REQUIRED
+  marker NMTOKEN #IMPLIED
+  dist NMTOKEN "0.5"
+  gene NMTOKEN #IMPLIED
+>
+<!ATTLIST ge:datafile
+  studyname NMTOKEN #IMPLIED
+  genotypedata CDATA #IMPLIED
+  quantitative CDATA #IMPLIED
+  haplotype CDATA #IMPLIED
+  linkageparameter CDATA #IMPLIED
+  decoderfile CDATA #IMPLIED
+>
+<!ATTLIST ge:param
+  name NMTOKEN #REQUIRED
+>
+<!ATTLIST ge:cctable
+  loci NMTOKENS #IMPLIED
+  stats NMTOKENS #IMPLIED
+  metas NMTOKENS #IMPLIED
+  model NMTOKENS #IMPLIED
+  type NMTOKENS #IMPLIED
+  repeat NMTOKENS "RepeatLoci"
+  tables NMTOKENS #IMPLIED
+>
+<!ATTLIST ge:col
+  wt NMTOKEN "0"
+>
+

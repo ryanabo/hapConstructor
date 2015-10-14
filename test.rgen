@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE ge:rgen SYSTEM "ge-rgen.dtd">
+<ge:rgen rseed="random" nsims="2" top="HapMCTopTogether" drop="HapMCDropTogether" report="both">
+
+<ge:locus id="1" marker="m1" gene="1" />
+<ge:locus id="2" marker="m2" dist="0.00" gene="1" />
+<ge:locus id="3" marker="m3" dist="0.00" gene="1" />
+<ge:locus id="4" marker="m4" dist="0.00" gene="1" />
+<ge:locus id="5" marker="m5" dist="0.00" gene="1" />
+<ge:locus id="6" marker="m6" dist="0.00" gene="1" />
+<ge:locus id="7" marker="m7" dist="0.00" gene="1" />
+<ge:locus id="8" marker="m8" dist="0.00" gene="1" />
+<ge:locus id="9" marker="m9" dist="0.00" gene="1" />
+<ge:locus id="10" marker="m10" dist="0.00" gene="1" />
+<ge:locus id="11" marker="m11" dist="0.00" gene="1" />
+<ge:locus id="12" marker="m12" dist="0.00" gene="1" />
+<ge:locus id="13" marker="m13" dist="0.00" gene="1" />
+<ge:locus id="14" marker="m14" dist="0.00" gene="1" />
+<ge:locus id="15" marker="m15" dist="0.50" gene="2" />
+<ge:locus id="16" marker="m16" dist="0.00" gene="2" />
+<ge:locus id="17" marker="m17" dist="0.00" gene="2" />
+<ge:locus id="18" marker="m18" dist="0.00" gene="2" />
+<ge:locus id="19" marker="m19" dist="0.00" gene="2" />
+<ge:locus id="20" marker="m20" dist="0.00" gene="2" />
+<ge:locus id="21" marker="m21" dist="0.00" gene="2" />
+<ge:locus id="22" marker="m22" dist="0.00" gene="2" />
+<ge:locus id="23" marker="m23" dist="0.00" gene="2" />
+<ge:locus id="24" marker="m24" dist="0.00" gene="2" />
+<ge:locus id="25" marker="m25" dist="0.00" gene="2" />
+
+<ge:datafile studyname="test" genotypedata="test.dat"/>
+
+  <!-- optional modules -->
+  <ge:param name="ccstat1">OddsRatios</ge:param>
+  <ge:param name="ccstat2">InteractionLD</ge:param>
+  <ge:param name="ccstat3">InteractionOddsRatios</ge:param>
+  <ge:param name="percent">80</ge:param>
+
+  <!-- other optional parameters -->
+  <ge:param name="top-sample">all</ge:param>
+  <ge:param name="caseOnlyIntx">false</ge:param>
+  <ge:param name="phaseTogether">false</ge:param>
+  <!-- <ge:param name="loadNullData">true</ge:param> -->
+  <ge:param name="logNullData">false</ge:param>
+  <ge:param name="logNullStartIndex">0</ge:param>
+  <ge:param name="hapc_threshold">0.1, 0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00001</ge:param>
+  <ge:param name="hapc_sigtesting">false</ge:param>
+  <ge:param name="hapc_logtablecounts">true</ge:param>
+  <ge:param name="hapc_backsets">false</ge:param>
+  <ge:param name="hapc_models">HAdd,HRec,HDom,MSpec</ge:param>
+  <ge:param name="hapc_compositehaplotypes">true</ge:param>
+  <ge:param name="hapc_check_mostsignificant">false</ge:param>
+
+  <ge:cctable stats="1" type="Allele" model="Allele">
+    <ge:col wt="0">
+      <ge:g>
+        <ge:a>1</ge:a>
+      </ge:g>
+    </ge:col>
+    <ge:col wt="1"> 
+      <ge:g> 
+        <ge:a>2</ge:a> 
+      </ge:g> 
+    </ge:col> 
+  </ge:cctable> 
+
+ <ge:cctable stats="1" model="Rec" >
+    <ge:col wt="0">
+      <ge:g>
+        <ge:a>(1/.) | (./1)</ge:a>
+      </ge:g>
+    </ge:col>
+    <ge:col wt="1">
+      <ge:g>
+        <ge:a>2/2 </ge:a>
+      </ge:g>
+    </ge:col>
+  </ge:cctable>
+
+ <ge:cctable stats="1" model="Dom">
+    <ge:col wt="0">
+      <ge:g>
+        <ge:a>1/1</ge:a>
+      </ge:g>
+    </ge:col>
+    <ge:col wt="1">
+      <ge:g>
+        <ge:a>(2/.)|(./2)</ge:a>
+      </ge:g>
+    </ge:col>
+  </ge:cctable>
+
+</ge:rgen>
